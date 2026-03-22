@@ -1,26 +1,24 @@
 FROM php:8.4-cli
 
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    libzip-dev \
-    libicu-dev \
-    libonig-dev \
-    && docker-php-ext-install pdo zip intl
+    git unzip libzip-dev libicu-dev libonig-dev \
+    && docker-php-ext-install pdo zip intl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Install Symfony CLI
-RUN curl -sS https://get.symfony.com/cli/installer | bash \
-    && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
-
 WORKDIR /var/www/html
+
+# Install deps WITHOUT scripts
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copy full project
 COPY . .
 
-RUN if [ -f composer.json ]; then composer install; fi
+# Now Symfony is complete → scripts will work
+RUN php bin/console cache:clear || true
 
 EXPOSE 8000
 
-# Symfony internal server
-CMD ["bash", "-c", "if [ ! -d vendor ]; then composer install; fi && php -S 0.0.0.0:8000 -t public"]
+CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]

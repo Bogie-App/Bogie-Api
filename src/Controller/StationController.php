@@ -1,20 +1,47 @@
 <?php
+
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use OpenApi\Attributes as OA;
+use App\Dto\StationBriefDto;
+use App\Dto\StationListResponseDto;
 
 class StationController extends AbstractController
 {
-    #[Route('/stations', name: 'stations_list', methods: ['GET'])]
+    private array $stations = [
+        ['Id' => 0, 'Name' => 'Name1'],
+        ['Id' => 1, 'Name' => 'Name2']
+    ];
+
+    #[Route('api/stations', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns a list of stations brief description',
+        content: new OA\JsonContent(
+            type: 'object',
+            items: new OA\Items(ref: new Model(type: StationListResponseDto::class, groups: ['full']))
+        )
+    )]
     public function list(): JsonResponse
     {
-        $data = [
-            'message' => 'Hello Symfony API!',
-            'status' => 'success'
-        ];
+        $stations = array_map(
+            fn($s) => new StationBriefDto(
+                id: $s['Id'],
+                name: $s['Name']
+            ),
+            $this->stations
+        );
 
-        return $this->json($data);
+        $response = new StationListResponseDto(
+            count: count($stations),
+            stations: $stations,
+            status: 'success'
+        );
+
+        return $this->json($response);
     }
 }
