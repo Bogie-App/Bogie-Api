@@ -9,6 +9,7 @@ use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 use App\Dto\StationBriefDto;
 use App\Dto\StationListResponseDto;
+use Doctrine\DBAL\Connection;
 
 class StationController extends AbstractController
 {
@@ -43,5 +44,19 @@ class StationController extends AbstractController
         );
 
         return $this->json($response);
+    }
+
+    #[Route('api/test', methods: ['GET'])]
+    public function test(Connection $connection): JsonResponse
+    {
+        $stations = $connection->fetchAllAssociative(
+            'SELECT id, name FROM station'
+        );
+
+        return $this->json([
+            'count' => count($stations),
+            'stations' => $stations,
+            'status' => 'success',
+        ]);
     }
 }

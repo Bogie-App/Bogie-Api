@@ -1,8 +1,8 @@
 FROM php:8.4-cli
 
 RUN apt-get update && apt-get install -y \
-    git unzip libzip-dev libicu-dev libonig-dev \
-    && docker-php-ext-install pdo zip intl \
+    git unzip libzip-dev libicu-dev libonig-dev libpq-dev postgresql-client \
+    && docker-php-ext-install pdo pdo_pgsql zip intl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
